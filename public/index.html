@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post API Manager</title>
-    <meta name="description" content="Kelola postingan Anda dengan mudah menggunakan Post API Manager">
     <style>
         * {
             margin: 0;
@@ -187,14 +186,12 @@
             font-weight: 700;
             color: #1f2937;
             margin-bottom: 8px;
-            word-wrap: break-word;
         }
 
         .post-content {
             color: #4b5563;
             line-height: 1.6;
             margin-bottom: 12px;
-            word-wrap: break-word;
         }
 
         .post-meta {
@@ -203,8 +200,6 @@
             align-items: center;
             font-size: 0.85rem;
             color: #6b7280;
-            flex-wrap: wrap;
-            gap: 8px;
         }
 
         .post-author {
@@ -305,11 +300,6 @@
             .form-section, .posts-section {
                 padding: 20px;
             }
-
-            .post-meta {
-                flex-direction: column;
-                align-items: flex-start;
-            }
         }
 
         .empty-state {
@@ -324,42 +314,9 @@
             margin: 0 auto 16px;
             opacity: 0.5;
         }
-
-        .connection-status {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .connection-status.online {
-            background: #10b981;
-            color: white;
-        }
-
-        .connection-status.offline {
-            background: #ef4444;
-            color: white;
-        }
-
-        .error-message {
-            background: #fef2f2;
-            color: #991b1b;
-            padding: 10px;
-            border-radius: 6px;
-            margin-top: 10px;
-            font-size: 0.9rem;
-        }
     </style>
 </head>
 <body>
-    <div class="connection-status" id="connectionStatus" style="display: none;"></div>
-    
     <div class="container">
         <div class="header">
             <h1>📝 Post API Manager</h1>
@@ -376,19 +333,17 @@
                 <form id="postForm">
                     <div class="form-group">
                         <label for="title">Judul Post *</label>
-                        <input type="text" id="title" name="title" required placeholder="Masukkan judul post..." maxlength="200">
-                        <div class="error-message" id="titleError" style="display: none;"></div>
+                        <input type="text" id="title" name="title" required placeholder="Masukkan judul post...">
                     </div>
 
                     <div class="form-group">
                         <label for="content">Konten Post *</label>
-                        <textarea id="content" name="content" required placeholder="Tulis konten post Anda di sini..." maxlength="5000"></textarea>
-                        <div class="error-message" id="contentError" style="display: none;"></div>
+                        <textarea id="content" name="content" required placeholder="Tulis konten post Anda di sini..."></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="author">Penulis</label>
-                        <input type="text" id="author" name="author" placeholder="Nama penulis (opsional)" maxlength="100">
+                        <input type="text" id="author" name="author" placeholder="Nama penulis (opsional)">
                     </div>
 
                     <button type="submit" class="btn" id="submitBtn">
@@ -421,80 +376,21 @@
         class PostManager {
             constructor() {
                 this.baseURL = window.location.origin;
-                this.isOnline = navigator.onLine;
                 this.init();
             }
 
             init() {
                 this.bindEvents();
-                this.setupConnectionMonitor();
                 this.loadPosts();
             }
 
             bindEvents() {
                 const form = document.getElementById('postForm');
                 form.addEventListener('submit', this.handleSubmit.bind(this));
-                
-                // Real-time validation
-                document.getElementById('title').addEventListener('input', this.validateTitle.bind(this));
-                document.getElementById('content').addEventListener('input', this.validateContent.bind(this));
-            }
-
-            setupConnectionMonitor() {
-                const updateStatus = () => {
-                    this.isOnline = navigator.onLine;
-                    const statusEl = document.getElementById('connectionStatus');
-                    
-                    if (this.isOnline) {
-                        statusEl.textContent = '🟢 Online';
-                        statusEl.className = 'connection-status online';
-                        setTimeout(() => statusEl.style.display = 'none', 3000);
-                    } else {
-                        statusEl.textContent = '🔴 Offline';
-                        statusEl.className = 'connection-status offline';
-                        statusEl.style.display = 'block';
-                    }
-                };
-
-                window.addEventListener('online', updateStatus);
-                window.addEventListener('offline', updateStatus);
-            }
-
-            validateTitle(e) {
-                const title = e.target.value;
-                const errorEl = document.getElementById('titleError');
-                
-                if (title.length > 200) {
-                    errorEl.textContent = 'Judul tidak boleh lebih dari 200 karakter';
-                    errorEl.style.display = 'block';
-                    return false;
-                } else {
-                    errorEl.style.display = 'none';
-                    return true;
-                }
-            }
-
-            validateContent(e) {
-                const content = e.target.value;
-                const errorEl = document.getElementById('contentError');
-                
-                if (content.length > 5000) {
-                    errorEl.textContent = 'Konten tidak boleh lebih dari 5000 karakter';
-                    errorEl.style.display = 'block';
-                    return false;
-                } else {
-                    errorEl.style.display = 'none';
-                    return true;
-                }
             }
 
             async handleSubmit(e) {
                 e.preventDefault();
-                
-                if (!this.isOnline) {
-                    this.showAlert('Tidak ada koneksi internet. Silakan coba lagi.', 'error');
-                    return;
-                }
                 
                 const formData = new FormData(e.target);
                 const postData = {
@@ -503,14 +399,8 @@
                     author: formData.get('author').trim() || undefined
                 };
 
-                // Validation
                 if (!postData.title || !postData.content) {
                     this.showAlert('Judul dan konten harus diisi!', 'error');
-                    return;
-                }
-
-                if (!this.validateTitle({target: {value: postData.title}}) || 
-                    !this.validateContent({target: {value: postData.content}})) {
                     return;
                 }
 
@@ -531,16 +421,12 @@
                         this.showAlert('Post berhasil dibuat! 🎉', 'success');
                         e.target.reset();
                         this.loadPosts();
-                        
-                        // Clear error messages
-                        document.getElementById('titleError').style.display = 'none';
-                        document.getElementById('contentError').style.display = 'none';
                     } else {
                         this.showAlert(result.message || 'Gagal membuat post', 'error');
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    this.showAlert('Terjadi kesalahan saat membuat post. Silakan coba lagi.', 'error');
+                    this.showAlert('Terjadi kesalahan saat membuat post', 'error');
                 } finally {
                     this.setLoading(false);
                 }
@@ -554,18 +440,13 @@
 
                 try {
                     const response = await fetch(`${this.baseURL}/api/posts`);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    
                     const result = await response.json();
 
                     if (result.success) {
                         this.renderPosts(result.data);
                         this.updateStats(result.total);
                     } else {
-                        this.renderError(result.message || 'Gagal memuat postingan');
+                        this.renderError('Gagal memuat postingan');
                     }
                 } catch (error) {
                     console.error('Error:', error);
@@ -620,7 +501,7 @@
             }
 
             updateStats(total) {
-                document.getElementById('totalPosts').textContent = total || 0;
+                document.getElementById('totalPosts').textContent = total;
             }
 
             setLoading(loading) {
@@ -650,52 +531,30 @@
             }
 
             escapeHtml(text) {
-                if (!text) return '';
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
             }
 
             formatDate(dateString) {
-                try {
-                    const date = new Date(dateString);
-                    return date.toLocaleDateString('id-ID', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                } catch (error) {
-                    return 'Tanggal tidak valid';
-                }
+                const date = new Date(dateString);
+                return date.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
             }
         }
 
-        // Initialize the app when DOM is loaded
-        let postManager;
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                postManager = new PostManager();
-            });
-        } else {
-            postManager = new PostManager();
-        }
+        // Initialize the app
+        const postManager = new PostManager();
 
-        // Auto refresh posts every 30 seconds (only if online)
+        // Auto refresh posts every 30 seconds
         setInterval(() => {
-            if (navigator.onLine && postManager) {
-                postManager.loadPosts();
-            }
+            postManager.loadPosts();
         }, 30000);
-
-        // Handle page visibility changes
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && navigator.onLine && postManager) {
-                postManager.loadPosts();
-            }
-        });
     </script>
 </body>
 </html>
