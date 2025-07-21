@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(cors());
+app.use(express.static('public'));
 
 // In-memory storage (untuk demo - di production gunakan database)
 let posts = [
@@ -20,6 +21,7 @@ let posts = [
   }
 ];
 let nextId = 2;
+
 
 
 // GET - Menampilkan semua posts

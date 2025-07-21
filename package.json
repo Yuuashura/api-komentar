@@ -1,13 +1,31 @@
 {
-  "name": "express-api-vercel",
+  "name": "nodejs-post-api",
   "version": "1.0.0",
-  "main": "api/posts.js",
+  "description": "Node.js API with POST functionality and frontend",
+  "main": "index.js",
   "scripts": {
-    "dev": "node api/posts.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "echo 'Build completed'",
+    "vercel-build": "echo 'Vercel build completed'"
   },
+  "keywords": [
+    "nodejs",
+    "express",
+    "api",
+    "post",
+    "vercel"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
-    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "serverless-http": "^3.1.0"
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
