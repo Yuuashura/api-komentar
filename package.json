@@ -1,20 +1,18 @@
 {
-  "name": "nodejs-post-api",
+  "name": "post-api-manager",
   "version": "1.0.0",
-  "description": "Node.js API with POST functionality and frontend",
+  "description": "Simple Post API Manager with Express.js",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "build": "echo 'Build completed'",
-    "vercel-build": "echo 'Vercel build completed'"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "nodejs",
     "express",
     "api",
-    "post",
-    "vercel"
+    "posts",
+    "crud"
   ],
   "author": "Your Name",
   "license": "MIT",
@@ -26,6 +24,6 @@
     "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   }
 }

@@ -6,9 +6,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(express.json());
-app.use(cors());
-app.use(express.static('public'));
+app.use(express.json({ limit: '10mb' }));
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // In-memory storage (untuk demo - di production gunakan database)
 let posts = [
@@ -17,21 +23,40 @@ let posts = [
     title: "Welcome Post",
     content: "Selamat datang di API kami!",
     author: "Admin",
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }
 ];
 let nextId = 2;
 
-
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API is running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
 
 // GET - Menampilkan semua posts
 app.get('/api/posts', (req, res) => {
   try {
+    // Add query parameters for pagination if needed
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    
+    const paginatedPosts = posts.slice(startIndex, endIndex);
+    
     res.json({
       success: true,
       message: 'Posts retrieved successfully',
-      data: posts,
-      total: posts.length
+      data: paginatedPosts,
+      total: posts.length,
+      page,
+      totalPages: Math.ceil(posts.length / limit)
     });
   } catch (error) {
     res.status(500).json({
@@ -42,9 +67,18 @@ app.get('/api/posts', (req, res) => {
   }
 });
 
+// GET - Menampilkan post berdasarkan ID
 app.get('/api/posts/:id', (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID'
+      });
+    }
+    
     const post = posts.find(p => p.id === id);
     
     if (!post) {
@@ -82,6 +116,21 @@ app.post('/api/posts', (req, res) => {
       });
     }
     
+    // Validasi panjang input
+    if (title.length > 200) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title must be less than 200 characters'
+      });
+    }
+    
+    if (content.length > 5000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content must be less than 5000 characters'
+      });
+    }
+    
     // Buat post baru
     const newPost = {
       id: nextId++,
@@ -114,11 +163,33 @@ app.put('/api/posts/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const { title, content, author } = req.body;
     
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID'
+      });
+    }
+    
     const postIndex = posts.findIndex(p => p.id === id);
     if (postIndex === -1) {
       return res.status(404).json({
         success: false,
         message: 'Post not found'
+      });
+    }
+    
+    // Validasi input jika ada
+    if (title && title.length > 200) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title must be less than 200 characters'
+      });
+    }
+    
+    if (content && content.length > 5000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content must be less than 5000 characters'
       });
     }
     
@@ -146,6 +217,14 @@ app.put('/api/posts/:id', (req, res) => {
 app.delete('/api/posts/:id', (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid post ID'
+      });
+    }
+    
     const postIndex = posts.findIndex(p => p.id === id);
     
     if (postIndex === -1) {
@@ -171,15 +250,33 @@ app.delete('/api/posts/:id', (req, res) => {
   }
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+// Serve main page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 404 handler untuk API routes
+app.use('/api/*', (req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Endpoint not found'
+    message: 'API endpoint not found',
+    availableEndpoints: [
+      'GET /api/health',
+      'GET /api/posts',
+      'GET /api/posts/:id',
+      'POST /api/posts',
+      'PUT /api/posts/:id',
+      'DELETE /api/posts/:id'
+    ]
   });
 });
 
-// Error handler
+// 404 handler untuk semua routes lainnya
+app.use('*', (req, res) => {
+  res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Global error handler
 app.use((error, req, res, next) => {
   console.error('Error:', error);
   res.status(500).json({
@@ -189,9 +286,14 @@ app.use((error, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 API documentation: http://localhost:${PORT}/api/posts`);
-});
+// Start server (for local development)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📝 API documentation: http://localhost:${PORT}/api/posts`);
+    console.log(`🌐 Frontend: http://localhost:${PORT}`);
+  });
+}
 
+// Export untuk Vercel
 module.exports = app;
