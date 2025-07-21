@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post API Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .form-section, .posts-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #374151;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 30px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .posts-container {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .posts-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .posts-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .posts-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .posts-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .post-item {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4f46e5;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .post-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .post-content {
+            color: #4b5563;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .post-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .post-author {
+            background: #e0e7ff;
+            color: #4f46e5;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            color: #6b7280;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-left: 4px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert.error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0369a1;
+            display: block;
+        }
+
+        .stats-label {
+            color: #0284c7;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .form-section, .posts-section {
+                padding: 20px;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Post API Manager</h1>
+            <p>Kelola postingan Anda dengan mudah</p>
+        </div>
+
+        <div class="content">
+            <!-- Form Section -->
+            <div class="form-section">
+                <h2 class="section-title">Buat Post Baru</h2>
+                
+                <div id="alert" class="alert"></div>
+
+                <form id="postForm">
+                    <div class="form-group">
+                        <label for="title">Judul Post *</label>
+                        <input type="text" id="title" name="title" required placeholder="Masukkan judul post...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="content">Konten Post *</label>
+                        <textarea id="content" name="content" required placeholder="Tulis konten post Anda di sini..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="author">Penulis</label>
+                        <input type="text" id="author" name="author" placeholder="Nama penulis (opsional)">
+                    </div>
+
+                    <button type="submit" class="btn" id="submitBtn">
+                        <span id="btnText">📤 Posting</span>
+                        <div id="btnSpinner" class="spinner" style="display: none; width: 20px; height: 20px; margin: 0 auto;"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Posts Section -->
+            <div class="posts-section">
+                <h2 class="section-title">Daftar Postingan</h2>
+                
+                <div class="stats">
+                    <span class="stats-number" id="totalPosts">0</span>
+                    <span class="stats-label">Total Postingan</span>
+                </div>
+
+                <div id="postsContainer" class="posts-container">
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        Memuat postingan...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PostManager {
+            constructor() {
+                this.baseURL = 'yuu-api-komentar.vercel.app';
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.loadPosts();
+            }
+
+            bindEvents() {
+                const form = document.getElementById('postForm');
+                form.addEventListener('submit', this.handleSubmit.bind(this));
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(e.target);
+                const postData = {
+                    title: formData.get('title').trim(),
+                    content: formData.get('content').trim(),
+                    author: formData.get('author').trim() || undefined
+                };
+
+                if (!postData.title || !postData.content) {
+                    this.showAlert('Judul dan konten harus diisi!', 'error');
+                    return;
+                }
+
+                this.setLoading(true);
+
+                try {
+                    const response = await fetch(`${this.baseURL}/api/posts`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(postData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert('Post berhasil dibuat! 🎉', 'success');
+                        e.target.reset();
+                        this.loadPosts();
+                    } else {
+                        this.showAlert(result.message || 'Gagal membuat post', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.showAlert('Terjadi kesalahan saat membuat post', 'error');
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            async loadPosts() {
+                const container = document.getElementById('postsContainer');
+                const loading = document.getElementById('loading');
+                
+                loading.style.display = 'block';
+
+                try {
+                    const response = await fetch(`${this.baseURL}/api/posts`);
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.renderPosts(result.data);
+                        this.updateStats(result.total);
+                    } else {
+                        this.renderError('Gagal memuat postingan');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.renderError('Terjadi kesalahan saat memuat postingan');
+                } finally {
+                    loading.style.display = 'none';
+                }
+            }
+
+            renderPosts(posts) {
+                const container = document.getElementById('postsContainer');
+                
+                if (posts.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <h3>Belum ada postingan</h3>
+                            <p>Buat postingan pertama Anda!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = posts.map(post => `
+                    <div class="post-item" data-id="${post.id}">
+                        <div class="post-title">${this.escapeHtml(post.title)}</div>
+                        <div class="post-content">${this.escapeHtml(post.content)}</div>
+                        <div class="post-meta">
+                            <span class="post-author">${this.escapeHtml(post.author)}</span>
+                            <span>${this.formatDate(post.createdAt)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderError(message) {
+                const container = document.getElementById('postsContainer');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <h3>Oops!</h3>
+                        <p>${message}</p>
+                        <button class="btn" onclick="postManager.loadPosts()" style="margin-top: 15px; width: auto; padding: 8px 16px;">
+                            🔄 Muat Ulang
+                        </button>
+                    </div>
+                `;
+            }
+
+            updateStats(total) {
+                document.getElementById('totalPosts').textContent = total;
+            }
+
+            setLoading(loading) {
+                const btn = document.getElementById('submitBtn');
+                const btnText = document.getElementById('btnText');
+                const btnSpinner = document.getElementById('btnSpinner');
+
+                if (loading) {
+                    btn.disabled = true;
+                    btnText.style.display = 'none';
+                    btnSpinner.style.display = 'block';
+                } else {
+                    btn.disabled = false;
+                    btnText.style.display = 'block';
+                    btnSpinner.style.display = 'none';
+                }
+            }
+
+            showAlert(message, type) {
+                const alert = document.getElementById('alert');
+                alert.textContent = message;
+                alert.className = `alert ${type} show`;
+
+                setTimeout(() => {
+                    alert.classList.remove('show');
+                }, 5000);
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+
+        // Initialize the app
+        const postManager = new PostManager();
+
+        // Auto refresh posts every 30 seconds
+        setInterval(() => {
+            postManager.loadPosts();
+        }, 30000);
+    </script>
+</body>
+</html>
