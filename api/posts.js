@@ -6,7 +6,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// In-memory storage
 let posts = [
   {
     id: 1,
@@ -18,7 +17,6 @@ let posts = [
 ];
 let nextId = 2;
 
-// Routes
 app.get('/api/posts', (req, res) => {
   res.json({
     success: true,

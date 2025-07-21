@@ -1,9 +1,9 @@
 {
-  "name": "express-vercel-api",
+  "name": "express-api-vercel",
   "version": "1.0.0",
   "main": "api/posts.js",
   "scripts": {
-    "start": "node api/posts.js"
+    "dev": "node api/posts.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
